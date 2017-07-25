@@ -61,5 +61,6 @@ typings/
 dist
 /dist
 /tmp
-/out-tsc
+/dist/out-tsc
+/dist/out-tsc/**
 
