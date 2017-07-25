@@ -1,0 +1,29 @@
+{
+  "name": "cucumber-browser-testing-kts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "protractor ./protractor.conf.js",
+    "install": "webdriver-manager update"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tnubel/cucumber-browser-testing-kts.git"
+  },
+  "author": "Ted Nubel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tnubel/cucumber-browser-testing-kts/issues"
+  },
+  "homepage": "https://github.com/tnubel/cucumber-browser-testing-kts#readme",
+  "dependencies": {
+    "cucumber":"~2.3.1",
+    "chai": "~4.1.0",
+    "protractor": "~5.1.2",
+    "protractor-cucumber-framework":"~3.1.2",
+    "chai-as-promised": "~7.1.1",
+    "typescript":"~2.2.0",
+    "ts-node": "~2.0.0"
+  }
+}
