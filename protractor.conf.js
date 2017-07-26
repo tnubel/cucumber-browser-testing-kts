@@ -13,10 +13,9 @@ exports.config = {
   directConnect: true,
 
   cucumberOpts: {
-  require:    [ 'steps/**/*.ts' ],
-  format:     ['pretty', 'json:report.json'],
-  compiler:   'ts:ts-node/register',
-  formatOptions: {"colorsEnabled": false}
+    require:    [ 'steps/**/*.ts' ],
+    compiler:   'ts:ts-node/register',
+    formatOptions: {"colorsEnabled": false}
   },
     
   framework: 'custom',

@@ -64,3 +64,5 @@ dist
 /dist/out-tsc
 /dist/out-tsc/**
 
+report.json
+output.txt

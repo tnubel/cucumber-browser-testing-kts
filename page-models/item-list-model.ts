@@ -8,7 +8,8 @@ chai.use(chaiAsPromised);
 
 var expect = chai.expect;
 
-import { element, protractor, browser, by, promise, ElementFinder } from 'protractor';
+import { element, protractor, browser, by, promise, ElementFinder, WebElement } from 'protractor';
+var expectedCondition = protractor.ExpectedConditions;
 
 //Define selectors in a single spot for easy updates later
 const addItemButtonSelector = "button[aria-label='add']";
@@ -17,8 +18,11 @@ const newDescriptionFieldSelector = ".mat-list-item-content input[placeholder='D
 const newIdFieldSelector = ".mat-list-item-content input[placeholder='ID']";
 const newInventoryFieldSelector = ".mat-list-item-content input[placeholder='Inventory']";
 
-//This selector is getting a little tricky - work with developers to add testing classes to avoid brittle selectors like this
-const itemSelector = "md-list-item app-item-view>div>div:last-child";
+const editDescriptionFieldSelector = "app-item-editor md-input-container:nth-child(3) input"
+const saveEditButtonSelector = "button[aria-label='save']";
+const homeButtonSelector = "button[aria-label='home']";
+
+const itemSelector = "md-list-item:not(:first-child)";
 
 export class ItemListPageModel {
 
@@ -50,13 +54,12 @@ export class ItemListPageModel {
     var itemReps = [];
     var itemPromisesPromise = elements.map(el => 
     {
-        return ItemRepresentation.getItemRepresentation(el);
+      return ItemRepresentation.getItemRepresentation(el);
     });
       
     return itemPromisesPromise.then((itemPromises : promise.Promise<ItemRepresentation>[]) => {
       return promise.all(itemPromises).then(items =>
         {
-          console.log(items);
           return items;
         });
     });
@@ -64,6 +67,33 @@ export class ItemListPageModel {
 
 
   /// METHODS
+
+  public static clickButton(id:string, label : string) : Promise<void>
+  {
+        var elements = element.all(by.css(itemSelector));
+        var correctElementPromise = new Promise<ElementFinder>((resolve,reject) => {
+          elements.each((el)=>{
+            var elIdPromise = el.all(by.css(ItemRepresentation.idSelector)).first().getText();
+            elIdPromise.then(elId => {
+              if (elId == id)
+              {
+                resolve(el);
+              }
+            });
+          });
+        });
+        return correctElementPromise.then((correctElement) => {
+          return new Promise<void>((resolve,reject)=>
+          {
+            correctElement.all(by.css("button[aria-label='"+label+"']"))
+            .first().click().then(()=>{
+              resolve();
+            });
+          });
+        });        
+      
+  }
+
 
   public static NavigateTo(): promise.Promise<void> {
     return browser.get(`${process.env.BASE_URL}/item-list`);
@@ -88,6 +118,21 @@ export class ItemListPageModel {
       return matchingItems[0];
     });
   }
+
+  public static EditDescription(newDesc : string) : promise.Promise<void> {
+    return element(by.css(editDescriptionFieldSelector)).clear().then(()=>
+    {
+      return element(by.css(editDescriptionFieldSelector)).sendKeys(newDesc);
+    });
+  }
+  
+  public static SaveEdit() : promise.Promise<void>
+  {
+    return element(by.css(saveEditButtonSelector)).click().then(()=>
+    {
+      return element.all(by.css(homeButtonSelector)).first().click();
+    });
+  }
 }
 
 export class ItemRepresentation {
@@ -96,17 +141,19 @@ export class ItemRepresentation {
   public Inventory: string;
   public Description: string;
 
-  static idSelector = " div:nth-child(1)";
-  static titleSelector = " div:nth-child(2)";
-  static inventorySelector = " div:nth-child(4)";
-  static descriptionSelector = " div:nth-child(3)";
+  static idSelector = " app-item-view>div>div:last-child div:nth-child(1)";
+  static titleSelector = " app-item-view>div>div:last-child div:nth-child(2)";
+  static inventorySelector = " app-item-view>div>div:last-child div:nth-child(4)";
+  static descriptionSelector = " app-item-view>div>div:last-child div:nth-child(3)";
 
   public static getItemRepresentation(container: ElementFinder): promise.Promise<ItemRepresentation> {
     var itemRep = new ItemRepresentation();
+    
 
-    var propertyPromises = [
+    var propertyPromises = [      
       container.all(by.css(ItemRepresentation.idSelector)).first().getText().then(text => {
         itemRep.ID = text;
+      
       }),
       container.all(by.css(ItemRepresentation.titleSelector)).first().getText().then(text => {
         itemRep.Title = text;

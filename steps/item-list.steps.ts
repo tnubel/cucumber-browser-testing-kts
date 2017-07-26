@@ -5,17 +5,18 @@ require('dotenv').config();
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
 import {ItemListPageModel,ItemRepresentation} from '../page-models/item-list-model';
+import { protractor, browser, element, by } from 'protractor';
+
+
+var expectedCondition = protractor.ExpectedConditions;
 
 chai.use(chaiAsPromised);
-
 var expect = chai.expect;
-
-import { protractor, browser } from 'protractor';
 
 defineSupportCode(function ({ Given, Then, When }) {
   Given('I am on the item list page', function () {
     return ItemListPageModel.NavigateTo().then(() => {
-      return browser.sleep(1000);
+      return browser.sleep(2000);
     });
   });
 
@@ -27,10 +28,17 @@ defineSupportCode(function ({ Given, Then, When }) {
     return ItemListPageModel.AddItem(itemID, itemTitle, description, itemInventory);
   });
 
-  Then('I should see that the item list contains an item with ID {stringInDoubleQuotes}', function (itemID) {
-    // Write code here that turns the phrase above into concrete actions   
+  //Regular expressions can help make your steps more concise
+  Then(/I should see that the item list (contains|does not contain) an item with ID "(\d+)\"/, function (operand,itemID) {
     return ItemListPageModel.Items.then(items => {
-        return expect(items.filter(itemRep => itemRep.ID == itemID).length).to.equal(1);
+        let itemsCt = items.filter(itemRep => itemRep.ID == itemID).length;
+        if (operand == "contains")
+        {
+          return expect(itemsCt).to.equal(1);
+        }
+        else{
+          return expect(itemsCt).to.equal(0);
+        }
     });
   });
 
@@ -48,10 +56,45 @@ defineSupportCode(function ({ Given, Then, When }) {
     let getInv = ItemListPageModel.GetItemById(itemId).then(item => {
       return item.Inventory;
     });
-    //chai-as-promised lets us avoid nasty then chains inside our steps, but it's not necessary
+
     return expect(getInv).to.eventually.equal(inventory);
   });
 
+  When(/I click the (Edit|Buy|Sell|View|Delete) button next to the item with ID "(\d+)\"/, function (label,id) {    
+      return ItemListPageModel.clickButton(id,label.toLowerCase()).then(()=>
+      {
+        if (label != "View")
+        {
+          return browser.wait(expectedCondition.presenceOf(ItemListPageModel.TitleField));
+        }
+        else{
+          return;
+        }
+      });
+  }); 
 
+  When('I enter a description of {stringInDoubleQuotes}', function (description) {    
+    return ItemListPageModel.EditDescription(description);
+  });
+
+  When('I click the Save button', function () {
+    return ItemListPageModel.SaveEdit().then(()=>{
+      return browser.wait(expectedCondition.urlIs(process.env.BASE_URL+"/item-list"),4000);
+    });
+  });
+
+  Then('I should see that the item with an ID of {stringInDoubleQuotes} has a description of {stringInDoubleQuotes}', function (itemId, description)
+  {   
+    let getDescription = ItemListPageModel.GetItemById(itemId).then(item => {
+      return item.Description;
+    });
+
+    return expect(getDescription).to.eventually.equal(description);
+
+  });
+
+  Then('I should see that I am viewing the details page for the item with an ID of {stringInDoubleQuotes}', function (itemID) {
+    return browser.wait(expectedCondition.urlIs(process.env.BASE_URL+"/item/"+itemID));
+  });
 
 });
